@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="refresh" content="60">
+    <title>Minha Página</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+</head>
+<body>
+
+<main class="container">
+    <div th:replace="~{header :: header}"></div>
+
+    <div class="p-md-3 mb-3 rounded text-body-emphasis bg-body-secondary">
+        <form class="row g-3" th:action="@{/}">
+            <div class="col">
+                <input type="text" class="form-control" placeholder="Descrição" name="descricao" th:value="${descricao}">
+            </div>
+            <div class="col">
+                <select class="form-select" name="status">
+                    <option value="" selected>Selecione...</option>
+                    <option th:each="st : ${statusList}" th:value="${st}" th:text="${st}" th:selected="${!#arrays.isEmpty(status) && st == status[0]}"}></option>
+                </select>
+            </div>
+            <div class="col">
+                <input type="text" class="form-control" name="inicio" onfocus="(this.type='date')" onblur="(this.type='text')" placeholder="Data inicio" th:value="${inicio}">
+            </div>
+            <div class="col">
+                <input type="text" class="form-control" name="fim" onfocus="(this.type='date')" onblur="(this.type='text')" placeholder="Data fim" th:value="${fim}">
+            </div>
+            <div class="col">
+                <button type="submit" class="btn btn-outline-primary">
+                    Buscar
+                </button>
+                <button type="button" class="btn btn-outline-primary float-end" data-bs-toggle="modal" data-bs-target="#taskModal">
+                    Nova task
+                </button>
+            </div>
+        </form>
+        <div class="modal fade" id="taskModal" tabindex="-1" aria-labelledby="taskModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h1 class="modal-title fs-5" id="taskModalLabel">Nova Task</h1>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form th:action="@{/nova}" method="post" enctype="multipart/form-data">
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <input type="text" class="form-control" id="descricao" name="descricao"
+                                       placeholder="Descrição">
+                            </div>
+                            <div class="mb-3">
+                                <input type="number" class="form-control" id="originalEstimate" name="originalEstimate"
+                                       placeholder="Original estimate">
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="submit" class="btn btn-outline-primary">Salvar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <table class="table table-bordered">
+        <thead>
+        <tr>
+            <th class="text-center">Início</th>
+            <th class="text-center">Descrição</th>
+            <th class="text-center">Estimativa</th>
+            <th class="text-center">Restante</th>
+            <th class="text-center">Concluído</th>
+            <th class="text-center">Status</th>
+            <th class="text-center">Ação</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="task : ${tasks}">
+            <td class="text-center"><span th:text="${#temporals.format(task.inicio, 'dd/MM/yyyy HH:mm')}"></span></td>
+            <td class="text-center"><span th:text="${task.descricao}"></span></td>
+            <td class="text-center"><span th:text="${task.originalEstimate}"></span></td>
+            <td class="text-center"><span th:text="${task.remainingWork}"></span></td>
+            <td class="text-center"><span th:text="${task.completedWork}"></span></td>
+            <td class="text-center"><span th:text="${task.status}"></span></td>
+            <td style="width: 14.3%" class="text-center">
+                <a class="btn btn-outline-light btn-sm ma0" th:href="@{'/pausar/' + ${task.idExterno}}"
+                   th:if="${task.status.isRunning && !task.status.isFinished}">
+                    <i class="bi bi-pause-fill"></i>
+                </a>
+                <a class="btn btn-outline-primary btn-sm" th:href="@{'/retomar/' + ${task.idExterno}}"
+                   th:if="${task.status.isPaused && !task.status.isFinished}">
+                    <i class="bi bi-play-fill"></i>
+                </a>
+                <a class="btn btn-outline-warning btn-sm" th:href="@{'/finalizar/' + ${task.idExterno}}"
+                   th:if="${!task.status.isFinished}">
+                    <i class="bi bi-stop-fill"></i>
+                </a>
+                <a class="btn btn-outline-danger btn-sm" th:href="@{'/deletar/' + ${task.idExterno}}">
+                    <i class="bi bi-trash-fill"></i>
+                </a>
+                <a class="btn btn-outline-success btn-sm" th:href="@{'/reabrir/' + ${task.idExterno}}"
+                    th:if="${task.status.isFinished()}">
+                    <i class="bi bi-recycle"></i>
+                </a>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+    <div th:replace="~{footer :: footer}"></div>
+
+</main>
+<script th:src="@{../static/js/task.js}"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+        crossorigin="anonymous"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+</body>
+</html>
